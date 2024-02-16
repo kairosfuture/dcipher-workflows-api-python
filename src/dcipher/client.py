@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 from time import sleep
 from typing import Any, Dict, Optional, Union
@@ -26,8 +25,9 @@ from .exceptions import (
     UnprocessableEntityError,
     WorkflowFailedException,
 )
+from .logger import setup_logger
 
-logger = logging.getLogger(__name__)
+logger = setup_logger()
 
 
 class Dcipher:

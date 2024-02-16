@@ -1,5 +1,4 @@
 import asyncio
-import logging
 from typing import Any, Dict, Optional
 
 import httpx
@@ -13,8 +12,9 @@ from tenacity import (
 from .client import Dcipher
 from .constants import RETRIABLE_EXCEPTIONS
 from .exceptions import WorkflowFailedException
+from .logger import setup_logger
 
-logger = logging.getLogger(__name__)
+logger = setup_logger()
 
 
 class AsyncDcipher(Dcipher):
