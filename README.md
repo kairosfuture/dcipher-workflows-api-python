@@ -67,7 +67,7 @@ Functionality between the synchronous and asynchronous clients is otherwise iden
 ## Handling errors
 
 When the API returns a non-success status code (that is, 4xx or 5xx
-response), a subclass of `dcipher.WorkflowFailedException` is raised, containing an error message.
+response), a subclass of `dcipher.APIStatusError` is raised, containing an error message.
 
 In case Timeout or Connection errors occur, the client auto-retries with exponential back-off using `tenacity`.
 
@@ -82,7 +82,6 @@ Error codes are as follows:
 | 422         | `UnprocessableEntityError` |
 | 429         | `RateLimitError`           |
 | >=500       | `InternalServerError`      |
-| N/A         | `APIConnectionError`       |
 
 ### Retries
 
