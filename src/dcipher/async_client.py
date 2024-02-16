@@ -3,7 +3,6 @@ import logging
 from typing import Any, Dict, Optional
 
 import httpx
-from httpx import ConnectTimeout
 from tenacity import (
     retry,
     retry_if_exception_type,
@@ -12,6 +11,7 @@ from tenacity import (
 )
 
 from .client import Dcipher
+from .constants import RETRIABLE_EXCEPTIONS
 from .exceptions import WorkflowFailedException
 
 logger = logging.getLogger(__name__)
@@ -30,12 +30,15 @@ class AsyncDcipher(Dcipher):
         @retry(wait=wait_random_exponential(min=1, max=15),
                stop=stop_after_attempt(self.max_retries),
                retry=retry_if_exception_type(
-                   exception_types=(ConnectTimeout,)),
+                   exception_types=RETRIABLE_EXCEPTIONS),
                )
         async def send_post_request():
             async with httpx.AsyncClient() as client:
                 response = await client.post(**request_params, timeout=60)
-                response.raise_for_status()
+                try:
+                    response.raise_for_status()
+                except Exception:
+                    raise self._make_status_error(response=response)
                 return response.json()
 
         response = await send_post_request()
@@ -49,7 +52,7 @@ class AsyncDcipher(Dcipher):
         @retry(wait=wait_random_exponential(min=1, max=15),
                stop=stop_after_attempt(self.max_retries),
                retry=retry_if_exception_type(
-                   exception_types=(ConnectTimeout,)),
+                   exception_types=RETRIABLE_EXCEPTIONS),
                )
         async def get_status():
             params = self.prepare_status_params(
@@ -57,7 +60,10 @@ class AsyncDcipher(Dcipher):
 
             async with httpx.AsyncClient() as client:
                 status_response = await client.get(**params, timeout=60)
-                status_response.raise_for_status()
+                try:
+                    status_response.raise_for_status()
+                except Exception:
+                    raise self._make_status_error(response=status_response)
                 return status_response.json()
 
         while (True):

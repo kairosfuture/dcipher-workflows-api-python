@@ -2,10 +2,11 @@ import json
 import logging
 import os
 from time import sleep
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 import requests
-from requests.exceptions import ConnectTimeout
+from httpx import Response as HTTPXResponse
+from requests import Response as RequestsResponse
 from tenacity import (
     retry,
     retry_if_exception_type,
@@ -13,7 +14,18 @@ from tenacity import (
     wait_random_exponential,
 )
 
-from .exceptions import WorkflowFailedException
+from .constants import RETRIABLE_EXCEPTIONS
+from .exceptions import (
+    APIStatusError,
+    AuthenticationError,
+    BadRequestError,
+    ConflictError,
+    InternalServerError,
+    PermissionDeniedError,
+    RateLimitError,
+    UnprocessableEntityError,
+    WorkflowFailedException,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -69,11 +81,14 @@ class Dcipher:
         @retry(wait=wait_random_exponential(min=1, max=15),
                stop=stop_after_attempt(self.max_retries),
                retry=retry_if_exception_type(
-                   exception_types=(ConnectTimeout,)),
+                   exception_types=RETRIABLE_EXCEPTIONS),
                )
         def send_post_request():
             response = requests.post(**request_params, timeout=60)
-            response.raise_for_status()
+            try:
+                response.raise_for_status()
+            except Exception:
+                raise self._make_status_error(response=response)
             return response.json()
 
         response = send_post_request()
@@ -87,13 +102,16 @@ class Dcipher:
         @retry(wait=wait_random_exponential(min=1, max=15),
                stop=stop_after_attempt(self.max_retries),
                retry=retry_if_exception_type(
-                   exception_types=(ConnectTimeout,)),
+                   exception_types=RETRIABLE_EXCEPTIONS),
                )
         def get_status():
             params = self.prepare_status_params(
                 flow_id=flow_id, task_id=running_task_id)
             status_response = requests.get(**params, timeout=60)
-            status_response.raise_for_status()
+            try:
+                status_response.raise_for_status()
+            except Exception:
+                raise self._make_status_error(response=status_response)
             return status_response.json()
 
         while (True):
@@ -126,3 +144,23 @@ class Dcipher:
                 f"Output file is downloaded successfully to: {save_path}")
         else:
             response.raise_for_status()
+
+    def _make_status_error(self, response: Union[RequestsResponse,
+                                                 HTTPXResponse]):
+        status_code_to_exception = {
+            400: BadRequestError,
+            401: AuthenticationError,
+            403: PermissionDeniedError,
+            409: ConflictError,
+            422: UnprocessableEntityError,
+            429: RateLimitError,
+        }
+
+        if response.status_code >= 500:
+            exception_class = InternalServerError
+        else:
+            exception_class = status_code_to_exception.get(
+                response.status_code, APIStatusError)
+
+        message = response.json().get("message", "")
+        return exception_class(message=message, response=response)
