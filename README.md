@@ -1,4 +1,4 @@
-# Dcipher Workflows API Python API library
+# Dcipher Workflows API Python library
 
 The Dcipher Workflows Python library provides convenient access to the Dcipher Workflows API from any Python 3.7+
 application. It offers both synchronous and asynchronous clients powered by [httpx](https://github.com/encode/httpx).
