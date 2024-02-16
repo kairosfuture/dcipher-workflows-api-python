@@ -4,5 +4,4 @@ from .client import Dcipher
 __all__ = [
     "AsyncDcipher",
     "Dcipher",
-    "WorkflowFailedException",
 ]
