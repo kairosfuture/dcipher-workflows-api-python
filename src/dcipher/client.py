@@ -39,7 +39,7 @@ class Dcipher:
                 "Please either provide api_key or set DCIPHER_API_KEY environment variable.")  # noqa
         self.max_retries = max_retries
 
-    def prepare_request_params(self, flow_id: str, params: Dict[str, Any]) \
+    def _prepare_request_params(self, flow_id: str, params: Dict[str, Any]) \
             -> Dict:
         headers = {
             "Authorization": f"Api-Key {self.api_key}",
@@ -57,7 +57,7 @@ class Dcipher:
             "data": json.dumps(body),
         }
 
-    def prepare_status_params(self, flow_id: str, task_id: str) -> Dict:
+    def _prepare_status_params(self, flow_id: str, task_id: str) -> Dict:
         headers = {
             "Authorization": f"Api-Key {self.api_key}",
             "Content-Type": "application/json",
@@ -75,7 +75,7 @@ class Dcipher:
                  params: Dict[str, Any],
                  save_path: Optional[str]):
 
-        request_params = self.prepare_request_params(
+        request_params = self._prepare_request_params(
             flow_id=flow_id, params=params)
 
         @retry(wait=wait_random_exponential(min=1, max=15),
@@ -105,7 +105,7 @@ class Dcipher:
                    exception_types=RETRIABLE_EXCEPTIONS),
                )
         def get_status():
-            params = self.prepare_status_params(
+            params = self._prepare_status_params(
                 flow_id=flow_id, task_id=running_task_id)
             status_response = requests.get(**params, timeout=60)
             try:
@@ -121,7 +121,7 @@ class Dcipher:
 
             if status == "SUCCEEDED":
                 logger.debug("Workflow has SUCCEEDED. Saving results")
-                self.save_result(url=response_url, save_path=save_path)
+                self._save_result(url=response_url, save_path=save_path)
                 break
 
             if status == "FAILED":
@@ -131,7 +131,7 @@ class Dcipher:
             logger.debug(f"Status is {status}. Waiting for 3 more seconds")
             sleep(3)
 
-    def save_result(self, url: str, save_path: str):
+    def _save_result(self, url: str, save_path: str):
         # Send a GET request to the URL
         response = requests.get(url)
 

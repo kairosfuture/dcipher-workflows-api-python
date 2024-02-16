@@ -24,7 +24,7 @@ class AsyncDcipher(Dcipher):
                        params: Dict[str, Any],
                        save_path: Optional[str]):
 
-        request_params = self.prepare_request_params(
+        request_params = self._prepare_request_params(
             flow_id=flow_id, params=params)
 
         @retry(wait=wait_random_exponential(min=1, max=15),
@@ -55,7 +55,7 @@ class AsyncDcipher(Dcipher):
                    exception_types=RETRIABLE_EXCEPTIONS),
                )
         async def get_status():
-            params = self.prepare_status_params(
+            params = self._prepare_status_params(
                 flow_id=flow_id, task_id=running_task_id)
 
             async with httpx.AsyncClient() as client:
@@ -73,7 +73,7 @@ class AsyncDcipher(Dcipher):
 
             if status == "SUCCEEDED":
                 logger.debug("Workflow has SUCCEEDED. Saving results")
-                self.save_result(url=response_url, save_path=save_path)
+                self._save_result(url=response_url, save_path=save_path)
                 break
 
             if status == "FAILED":
