@@ -5,7 +5,7 @@ application. It offers both synchronous and asynchronous clients powered by [htt
 
 ## Documentation
 
-The REST API documentation can be found [on app.dcipheranalytics.com/workflows](https://app.dcipheranalytics.com/workflows).
+The REST API documentation can be found on [app.dcipheranalytics.com/workflows](https://app.dcipheranalytics.com/workflows)
 
 ## Installation
 
