@@ -32,6 +32,8 @@ logger = setup_logger()
 
 class Dcipher:
 
+    BASE_URL = "https://api.dcipheranalytics.com"
+
     def __init__(self, api_key: Optional[str], max_retries: int = 100):
         self.api_key = api_key or os.environ.get("DCIPHER_API_KEY")
         if not self.api_key:
@@ -45,9 +47,8 @@ class Dcipher:
             "Authorization": f"Api-Key {self.api_key}",
             "Content-Type": "application/json",
         }
-        endpoint_url_template = "https://api.dcipheranalytics.com/flows/{}/run"
+        endpoint_url = f"{self.BASE_URL}/flows/{flow_id}/run"
 
-        endpoint_url = endpoint_url_template.format(flow_id)
         body = {
             "pipelineParams": params,
         }
@@ -62,8 +63,7 @@ class Dcipher:
             "Authorization": f"Api-Key {self.api_key}",
             "Content-Type": "application/json",
         }
-        status_endpoint_url_template = "https://api.dcipheranalytics.com/flows/{}/status"  # noqa
-        status_endpoint_url = status_endpoint_url_template.format(flow_id)
+        status_endpoint_url = f"{self.BASE_URL}/flows/{flow_id}/status"  # noqa
         url = f"{status_endpoint_url}?taskId={task_id}"
         return {
             "url": url,
