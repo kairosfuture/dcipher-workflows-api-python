@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dcipher"
-version = "0.3.2"
+version = "0.3.3"
 license = "MIT"
 description = "The official Python client library for the Dcipher Workflows API"
 authors = ["Dcipher Analytics AB <dev@dcipheranalytics.com>"]
