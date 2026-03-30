@@ -70,10 +70,13 @@ class Dcipher:
             "headers": headers,
         }
 
-    def run_flow(self,
-                 flow_id: str,
-                 params: Dict[str, Any],
-                 save_path: Optional[str]):
+    def run_flow(
+            self,
+            flow_id: str,
+            params: Dict[str, Any],
+            save_path: Optional[str] = None,
+            wait_until_completion: bool = False,
+    ) -> Dict[str, str]:
 
         request_params = self._prepare_request_params(
             flow_id=flow_id, params=params)
@@ -96,6 +99,14 @@ class Dcipher:
         response_url = response["signedResponseURL"]
         running_task_id = response["taskId"]
         logger.debug(f"Running taskId: {running_task_id}")
+
+        result = {
+            "task_id": running_task_id,
+            "signed_response_url": response_url,
+        }
+
+        if not wait_until_completion:
+            return result
 
         sleep(5)
 
@@ -120,8 +131,9 @@ class Dcipher:
             message = status_response.get("message", "")
 
             if status == "SUCCEEDED":
-                logger.debug("Workflow has SUCCEEDED. Saving results")
-                self._save_result(url=response_url, save_path=save_path)
+                logger.debug("Workflow has SUCCEEDED.")
+                if save_path is not None:
+                    self._save_result(url=response_url, save_path=save_path)
                 break
 
             if status == "FAILED":
@@ -130,6 +142,8 @@ class Dcipher:
 
             logger.debug(f"Status is {status}. Waiting for 3 more seconds")
             sleep(3)
+
+        return result
 
     def _save_result(self, url: str, save_path: str):
         # Send a GET request to the URL
